@@ -1,17 +1,17 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.shortcuts import render
 from django.urls import reverse
 
 from .models import User
 
 
-def index(request):
+def index(request: HttpRequest) -> HttpResponse:
     return render(request, "auctions/index.html")
 
 
-def login_view(request):
+def login_view(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
 
         # Attempt to sign user in
@@ -57,6 +57,7 @@ def register(request):
             return render(request, "auctions/register.html", {
                 "message": "Username already taken."
             })
+        print('haha')
         login(request, user)
         return HttpResponseRedirect(reverse("index"))
     else:
