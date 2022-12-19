@@ -14,6 +14,14 @@ def index(request: HttpRequest) -> HttpResponse:
     })
 
 
+def listing(request: HttpRequest, id: int) -> HttpResponse:
+    listing = Listing.objects.get(pk=id)
+    print(listing)
+    return render(request, "auctions/listing.html", {
+        "listing": listing
+    })
+
+
 def login_view(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
 

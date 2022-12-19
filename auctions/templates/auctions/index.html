@@ -5,7 +5,9 @@
 
     {% for listing in listings %}
         <div class="listing">
-            <div>{{ listing.name }}</div>
+            <a href="{% url 'listing' listing.id %}">
+                <div>{{ listing.name }}</div>
+            </a>
             <div>{{ listing.description }}</div>
         </div>
     {% endfor %}
