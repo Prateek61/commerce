@@ -4,11 +4,14 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User
+from .models import User, Listing
 
 
 def index(request: HttpRequest) -> HttpResponse:
-    return render(request, "auctions/index.html")
+    listings = Listing.objects.order_by('-created')
+    return render(request, "auctions/index.html", {
+        "listings": listings
+    })
 
 
 def login_view(request: HttpRequest) -> HttpResponse:
