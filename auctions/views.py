@@ -22,6 +22,13 @@ def listing(request: HttpRequest, id: int) -> HttpResponse:
     })
 
 
+def create_listing(request: HttpRequest) -> HttpResponse:
+    if request.method == "GET":
+        return render(request, "auctions/create.html")
+    else:
+        ...
+
+
 def login_view(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
 
