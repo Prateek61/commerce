@@ -26,7 +26,29 @@ def create_listing(request: HttpRequest) -> HttpResponse:
     if request.method == "GET":
         return render(request, "auctions/create.html")
     else:
-        ...
+        try:
+            title = request.POST['title']
+            description = request.POST['description']
+            price = float(request.POST['price'])
+        except KeyError or TypeError:
+            return render(request, "auctions/create.html", {
+                'errorMessage': 'Fill form properly'
+            })
+
+        try:
+            img_url = request.POST['url']
+        except KeyError:
+            img_url = None
+
+        user = request.user
+
+        listing = Listing(name=title, price=price, description=description, author = user, picture = img_url)
+        listing.save()
+
+        return render(request, "auctions/create.html", {
+            'successMessage': 'Created form successfully'
+        })
+
 
 
 def login_view(request: HttpRequest) -> HttpResponse:
