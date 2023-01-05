@@ -4,5 +4,12 @@
     <div class="listing">
         <div>{{ listing.name }}</div>
         <div>{{ listing.description }}</div>
+        <div>{{ listing.price }}</div>
+
+        <form action="{% url 'wishlist' %}" method="post">
+            {% csrf_token %}
+            <input name="id" hidden type="text" value="{{ listing.pk }}">
+            <input type="submit" value="Wishlist">
+        </form>
     </div>
 {% endblock %}

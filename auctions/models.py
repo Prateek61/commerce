@@ -27,5 +27,9 @@ class Comment(models.Model):
     listing = models.ForeignKey(Listing, related_name="comments", on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
 
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, related_name="wishlists", on_delete=models.CASCADE)
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
+
 
 

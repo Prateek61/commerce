@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User, Listing
+from .models import User, Listing, Wishlist
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -46,9 +46,21 @@ def create_listing(request: HttpRequest) -> HttpResponse:
         listing.save()
 
         return render(request, "auctions/create.html", {
-            'successMessage': 'Created form successfully'
+            'successMessage': 'Created listing successfully'
         })
 
+
+def wishlist(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+
+        listing_id = request.POST["id"]
+        listing = Listing.objects.get(pk=listing_id)
+        user = request.user
+
+        _wishlist = Wishlist(user=user, listing=listing)
+        _wishlist.save()
+
+        return HttpResponseRedirect(reverse('index'))
 
 
 def login_view(request: HttpRequest) -> HttpResponse:
