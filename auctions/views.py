@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User, Listing, WatchList
+from .models import User, Listing, WatchList, Category
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -85,6 +85,21 @@ def watchlist(request: HttpRequest) -> HttpResponse:
             "title": "Watchlist"
         })
 
+def category(request: HttpRequest, category: str) -> HttpResponse:
+    category = Category.objects.get(name=category)
+    listings = Listing.objects.filter(category=category).order_by('-created')
+
+    return render(request, "auctions/index.html", {
+        "listings": listings,
+        "title": f"Active Listings({category.name})"
+    })
+
+def all_categories(request: HttpRequest) -> HttpResponse:
+    categories = Category.objects.all()
+
+    return render(request, "auctions/categories.html", {
+        "categories": categories
+    })
 
 def login_view(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
