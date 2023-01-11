@@ -6,10 +6,16 @@
         <div>{{ listing.description }}</div>
         <div>{{ listing.price }}</div>
 
+        {% if user.is_authenticated %}
         <form action="{% url 'wishlist' %}" method="post">
             {% csrf_token %}
             <input name="id" hidden type="text" value="{{ listing.pk }}">
+            {% if wishlisted %}
+            <input type="submit" value="Remove from Wishlist">
+            {% else %}
             <input type="submit" value="Wishlist">
+            {% endif %}
         </form>
+        {% endif %}
     </div>
 {% endblock %}

@@ -16,9 +16,16 @@ def index(request: HttpRequest) -> HttpResponse:
 
 def listing(request: HttpRequest, id: int) -> HttpResponse:
     listing = Listing.objects.get(pk=id)
-    print(listing)
+    user = request.user
+    wishlisted = False
+
+    # Check if wishlist already exists
+    if user.is_authenticated and Wishlist.objects.filter(user=user, listing=listing).exists():
+        wishlisted = True
+
     return render(request, "auctions/listing.html", {
-        "listing": listing
+        "listing": listing,
+        "wishlisted": wishlisted
     })
 
 
@@ -57,8 +64,13 @@ def wishlist(request: HttpRequest) -> HttpResponse:
         listing = Listing.objects.get(pk=listing_id)
         user = request.user
 
-        _wishlist = Wishlist(user=user, listing=listing)
-        _wishlist.save()
+        # Check if wishlist already exists
+        if Wishlist.objects.filter(user=user, listing=listing).exists():
+            # Delete wishlist
+            Wishlist.objects.filter(user=user, listing=listing).delete()
+        else:
+            _wishlist = Wishlist(user=user, listing=listing)
+            _wishlist.save()
 
         return HttpResponseRedirect(reverse('index'))
 
