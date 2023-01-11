@@ -5,12 +5,16 @@ from django.db import models
 class User(AbstractUser):
     pass
 
+class Category(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    created = models.DateTimeField(auto_now_add=True)
+
 class Listing(models.Model):
     name = models.CharField(max_length=100)
     price = models.FloatField()
     description = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
-    category = models.CharField(max_length=50, null=True, blank=True)
+    category = models.ForeignKey(Category, related_name="listings", on_delete=models.CASCADE, null=True, blank=True)
     author = models.ForeignKey(User, related_name="listings", on_delete=models.CASCADE)
     picture = models.URLField(max_length=200, null=True, blank=True)
 
@@ -31,6 +35,5 @@ class WatchList(models.Model):
     user = models.ForeignKey(User, related_name="wishlists", on_delete=models.CASCADE)
     listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
-
 
 
