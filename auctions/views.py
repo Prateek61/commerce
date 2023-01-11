@@ -4,28 +4,29 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User, Listing, Wishlist
+from .models import User, Listing, WatchList
 
 
 def index(request: HttpRequest) -> HttpResponse:
     listings = Listing.objects.order_by('-created')
     return render(request, "auctions/index.html", {
-        "listings": listings
+        "listings": listings,
+        "title": "Active Listings"
     })
 
 
 def listing(request: HttpRequest, id: int) -> HttpResponse:
     listing = Listing.objects.get(pk=id)
     user = request.user
-    wishlisted = False
+    watchlisted = False
 
-    # Check if wishlist already exists
-    if user.is_authenticated and Wishlist.objects.filter(user=user, listing=listing).exists():
-        wishlisted = True
+    # Check if WatchList already exists
+    if user.is_authenticated and WatchList.objects.filter(user=user, listing=listing).exists():
+        watchlisted = True
 
     return render(request, "auctions/listing.html", {
         "listing": listing,
-        "wishlisted": wishlisted
+        "watchlisted": watchlisted
     })
 
 
@@ -57,22 +58,32 @@ def create_listing(request: HttpRequest) -> HttpResponse:
         })
 
 
-def wishlist(request: HttpRequest) -> HttpResponse:
+def watchlist(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
 
         listing_id = request.POST["id"]
         listing = Listing.objects.get(pk=listing_id)
         user = request.user
 
-        # Check if wishlist already exists
-        if Wishlist.objects.filter(user=user, listing=listing).exists():
-            # Delete wishlist
-            Wishlist.objects.filter(user=user, listing=listing).delete()
+        # Check if WatchList already exists
+        if WatchList.objects.filter(user=user, listing=listing).exists():
+            # Delete WatchList
+            WatchList.objects.filter(user=user, listing=listing).delete()
         else:
-            _wishlist = Wishlist(user=user, listing=listing)
-            _wishlist.save()
+            _watchlist = WatchList(user=user, listing=listing)
+            _watchlist.save()
 
-        return HttpResponseRedirect(reverse('index'))
+        return HttpResponseRedirect(reverse('listing', args=(listing_id,)))
+
+    else:
+        user = request.user
+        watchlist = WatchList.objects.filter(user=user).order_by('-created')
+        listings = [watchlist_item.listing for watchlist_item in watchlist]
+
+        return render(request, "auctions/index.html", {
+            "listings": listings,
+            "title": "Watchlist"
+        })
 
 
 def login_view(request: HttpRequest) -> HttpResponse:
