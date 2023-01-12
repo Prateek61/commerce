@@ -30,6 +30,9 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
+# Redirect to login page if user is not authenticated(login required decorator)
+LOGIN_URL = '/login'
+
 INSTALLED_APPS = [
     'auctions',
     'django.contrib.admin',

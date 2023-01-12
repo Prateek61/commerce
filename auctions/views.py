@@ -3,6 +3,7 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect, HttpRequest
 from django.shortcuts import render
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required
 
 from .models import User, Listing, WatchList, Category
 
@@ -29,10 +30,13 @@ def listing(request: HttpRequest, id: int) -> HttpResponse:
         "watchlisted": watchlisted
     })
 
-
+@login_required
 def create_listing(request: HttpRequest) -> HttpResponse:
     if request.method == "GET":
-        return render(request, "auctions/create.html")
+        categories = Category.objects.all()
+        return render(request, "auctions/create.html", {
+            "categories": categories
+        })
     else:
         try:
             title = request.POST['title']
@@ -43,6 +47,12 @@ def create_listing(request: HttpRequest) -> HttpResponse:
                 'errorMessage': 'Fill form properly'
             })
 
+        category_id = int(request.POST['category'])
+        try:
+            category = Category.objects.get(pk=category_id)
+        except Category.DoesNotExist:
+            category = None
+
         try:
             img_url = request.POST['url']
         except KeyError:
@@ -50,14 +60,14 @@ def create_listing(request: HttpRequest) -> HttpResponse:
 
         user = request.user
 
-        listing = Listing(name=title, price=price, description=description, author = user, picture = img_url)
+        listing = Listing(name=title, price=price, description=description, author = user, category=category, picture = img_url)
         listing.save()
 
         return render(request, "auctions/create.html", {
             'successMessage': 'Created listing successfully'
         })
 
-
+@login_required
 def watchlist(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
 
@@ -120,7 +130,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
     else:
         return render(request, "auctions/login.html")
 
-
+@login_required
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect(reverse("index"))
