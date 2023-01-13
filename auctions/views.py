@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 
-from .models import User, Listing, WatchList, Category
+from .models import User, Listing, WatchList, Category, Comment, Bid
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -16,7 +16,7 @@ def index(request: HttpRequest) -> HttpResponse:
     })
 
 
-def listing(request: HttpRequest, id: int) -> HttpResponse:
+def listing(request: HttpRequest, id: int, status: int = 200, errorMessage: str = None) -> HttpResponse:
     listing = Listing.objects.get(pk=id)
     user = request.user
     watchlisted = False
@@ -25,10 +25,14 @@ def listing(request: HttpRequest, id: int) -> HttpResponse:
     if user.is_authenticated and WatchList.objects.filter(user=user, listing=listing).exists():
         watchlisted = True
 
+    # Get all comments
+    comments = Comment.objects.filter(listing=listing).order_by('-created')
+
     return render(request, "auctions/listing.html", {
         "listing": listing,
-        "watchlisted": watchlisted
-    })
+        "watchlisted": watchlisted,
+        "comments": comments,
+    }, status=status)
 
 @login_required
 def create_listing(request: HttpRequest) -> HttpResponse:
@@ -111,6 +115,25 @@ def all_categories(request: HttpRequest) -> HttpResponse:
         "categories": categories
     })
 
+@login_required
+def comment(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        try:
+            content = request.POST['content']
+            listing_id = int(request.POST['id'])
+        except KeyError or TypeError:
+            return listing(request, listing_id, 400, 'Fill form properly')
+
+        listing = Listing.objects.get(pk=listing_id)
+        user = request.user
+
+        comment = Comment(content=content, author=user, listing=listing)
+        comment.save()
+
+        return HttpResponseRedirect(reverse('listing', args=(listing_id,)))
+
+
+
 def login_view(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
 
@@ -126,7 +149,7 @@ def login_view(request: HttpRequest) -> HttpResponse:
         else:
             return render(request, "auctions/login.html", {
                 "message": "Invalid username and/or password."
-            })
+            }, status=400)
     else:
         return render(request, "auctions/login.html")
 

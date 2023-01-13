@@ -29,7 +29,6 @@ class Bid(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
 class Comment(models.Model):
-    title = models.CharField(max_length=100)
     content = models.TextField()
     author = models.ForeignKey(User, related_name="comments", on_delete=models.CASCADE)
     listing = models.ForeignKey(Listing, related_name="comments", on_delete=models.CASCADE)
