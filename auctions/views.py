@@ -132,6 +132,37 @@ def comment(request: HttpRequest) -> HttpResponse:
 
         return HttpResponseRedirect(reverse('listing', args=(listing_id,)))
 
+@login_required
+def bid(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        try:
+            bid = float(request.POST['bid'])
+            listing_id = int(request.POST['id'])
+        except KeyError or TypeError:
+            return listing(request, listing_id, 400, 'Fill form properly')
+
+        listing = Listing.objects.get(pk=listing_id)
+        user = request.user
+
+        # Get the most recent bid
+        try:
+            last_bid = Bid.objects.filter(listing=listing).latest('created')
+        except Bid.DoesNotExist:
+            last_bid = None
+
+        # Check if bid is higher than the last bid
+        if last_bid is not None and bid <= last_bid.bid:
+            return listing(request, listing_id, 400, 'Bid must be higher than the last bid')
+
+        # Check if bid is higher than the starting price
+        if bid <= listing.price:
+            return listing(request, listing_id, 400, 'Bid must be higher than the starting price')
+
+        # Create new bid
+        new_bid = Bid(bid=bid, author=user, listing=listing)
+        new_bid.save()
+
+        return HttpResponseRedirect(reverse('listing', args=(listing_id,)))
 
 
 def login_view(request: HttpRequest) -> HttpResponse:
