@@ -1,37 +1,46 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
-    <!--Item listing using bootstrap-->
-    <div class="listing">
-        <div class="container">
-            <div class="row">
-                {% if listing.picture %}
-                <div class="col-md-6">
-                    <!--Scale down picture to size-->
-                    <img src="{{ listing.picture }}" alt="Image of {{ listing.name }}" style="max-width: 100%; max-height: 100%;">
+    {% if listing.active %}
+    <h2 class="text-success">Active</h2>
+    {% else %}
+    <h2 class="text-danger">Closed</h2>
+    {% endif %}
+    <div class="item-listing">
+
+
+    <!-- Option to close listing for author -->
+    {% if user.is_authenticated and isAuthor and listing.active %}
+    <form action="{% url 'close' %}" method="post">
+        {% csrf_token %}
+        <input hidden type="number" name="id" value="{{ listing.id }}">
+        <input type="submit" value="Close Listing">
+    {% endif %}
+
+        <div class="card mb-3 p-2 no-border" style="min-height: 300px">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    {% if listing.picture %}
+                    <img src="{{ listing.picture }}" class="img-fluid rounded-start" alt="Image of {{ listing.name }}">
+                    {% else %}
+                    <!-- Grey backgorund -->
+                    <div class="bg-secondary" style="width: 100%; height: 100%;"></div>
+                    {% endif %}
                 </div>
-                {% endif %}
-                <div class="col-md-6">
-                    <h1>{{ listing.name }}</h1>
-                    <h3>{{ listing.description }}</h3>
-                    <h3>Starting bid: {{ listing.price }}</h3>
-                    <!-- <h3>Current bid: {{ listing.current_bid }}</h3> -->
-                    <h3>Category: {{ listing.category }}</h3>
-                    <h3>Owner: {{ listing.author }}</h3>
-                    <!-- <h3>Watchlist: {{ listing.watchlist }}</h3> -->
-                    <!-- <h3>Active: {{ listing.active }}</h3>
-                    <h3>Created: {{ listing.created }}</h3>
-                    <h3>Updated: {{ listing.updated }}</h3>
-                    <h3>Winner: {{ listing.winner }}</h3> -->
+                <div class="col-md-8">
+                    <div class="card-body">
+                        <a href="{% url 'listing' listing.id %}">
+                            <h5 class="card-title">{{ listing.name }}</h5>
+                        </a>
+                        <h6 class="card-subtitle mb-2 text-muted">Starting Price: {{ listing.price }}</h6>
+                        <p class="card-text">{{ listing.description }}</p>
+                        <p class="card-text"><small class="text-muted">Created: {{ listing.created }}</small></p>
+
+                        
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="listing">
-        <div>{{ listing.name }}</div>
-        <div>{{ listing.description }}</div>
-        <div>{{ listing.price }}</div>
 
         {% if user.is_authenticated %}
         <form action="{% url 'watchlist' %}" method="post">
@@ -44,39 +53,65 @@
             {% endif %}
         </form>
         {% endif %}
-    </div>
 
-    <!-- Form for comment -->
-    <form action="{% url 'comment' %}" method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="comment">Comment</label>
-            <textarea class="form-control" id="comment" name="content" rows="3"></textarea>
-            <input name="id" hidden type="text" value="{{ listing.pk }}">
-        </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
-
-    <!-- Display comments with boostrap -->
-    <div class="listing">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h1>Comments</h1>
-                    {% for comment in comments %}
-                    <div class="comment">
-                        <div class="container">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h3>{{ comment.content }}</h3>
-                                    <h3>Author: {{ comment.author.username }}</h3>
-                                    <h3>Created: {{ comment.created }}</h3>
-                                </div>
+        <div class="my-3">
+            <h6>
+                Max Bid: {{ max_bid }}
+            </h6>
+            {% if user.is_authenticated and listing.active %}
+                <h6>
+                    Your bid: {{ users_bid }}
+                </h6>
+                <!-- Form to bid -->
+                <form action="{% url 'bid' %}" method="post">
+                    {% csrf_token %}
+                    <input hidden type="number" name="id" value="{{ listing.id }}">
+                    <!-- Error Message -->
+                    {% if errorMessage %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ errorMessage }}
+                        </div>
+                    {% endif %}
+                    <div class="form-group">
+                        <!-- Form and submit button on same row -->
+                        <div class="row w-75">
+                            <div class="col-9">
+                                <input type="number" class="form-control" name="bid" placeholder="Enter bid">
+                            </div>
+                            <div class="col-2">
+                                <button type="submit" class="btn btn-primary">Bid</button>
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
+                </form>
+            {% endif %}
+        </div>
+
+        <!-- Form for comment -->
+        {% if user.is_authenticated and listing.active %}
+        <div>
+            <h3>Comment</h3>
+            <form action="{% url 'comment' %}" method="post">
+                {% csrf_token %}
+                <input hidden type="number" name="id" value="{{ listing.pk }}">
+                <div class="form-group">
+                    <textarea class="form-control" name="content" rows="3" placeholder="Enter comment"></textarea>
+                    <button type="submit" class="btn btn-primary my-2">Comment</button>
                 </div>
-            </div>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Comments -->
+        <div>
+            <h3>Comments</h3>
+            {% for comment in comments %}
+                <div class="card mb-3 p-3">
+                    <h5 class="card-title">{{ comment.author.username }}</h5>
+                    <p class="card-text">{{ comment.content }}</p>
+                    <p class="card-text"><small class="text-muted">Created: {{ comment.created }}</small></p>            
+                </div>
+            {% endfor %}
         </div>
     </div>
 {% endblock %}

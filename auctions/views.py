@@ -9,14 +9,15 @@ from .models import User, Listing, WatchList, Category, Comment, Bid
 
 
 def index(request: HttpRequest) -> HttpResponse:
-    listings = Listing.objects.order_by('-created')
+    # FILTER OUT INACTIVE LISTINGS
+    listings = Listing.objects.filter(active=True).order_by('-created')
     return render(request, "auctions/index.html", {
         "listings": listings,
         "title": "Active Listings"
     })
 
 
-def listing(request: HttpRequest, id: int, status: int = 200, errorMessage: str = None) -> HttpResponse:
+def listing_view(request: HttpRequest, id: int, status: int = 200, errorMessage: str = None) -> HttpResponse:
     listing = Listing.objects.get(pk=id)
     user = request.user
     watchlisted = False
@@ -25,16 +26,36 @@ def listing(request: HttpRequest, id: int, status: int = 200, errorMessage: str 
     if user.is_authenticated and WatchList.objects.filter(user=user, listing=listing).exists():
         watchlisted = True
 
-    for listing_item in listing:
-        listing_item.bid_price = 12
-
     # Get all comments
     comments = Comment.objects.filter(listing=listing).order_by('-created')
+
+    # Get the most recent bid
+    try:
+        last_bid = Bid.objects.filter(listing=listing).latest('created').amount
+    except Bid.DoesNotExist:
+        last_bid = None
+    
+    # Get the user's bid
+    users_bid = None
+    if user.is_authenticated:
+        try:
+            users_bid = Bid.objects.filter(listing=listing, author=user).latest('created').amount
+        except Bid.DoesNotExist:
+            users_bid = None
+
+    # Check if user is the author of the listing
+    is_author = False
+    if user.is_authenticated and listing.author == user:
+        isAuthor = True
 
     return render(request, "auctions/listing.html", {
         "listing": listing,
         "watchlisted": watchlisted,
         "comments": comments,
+        "max_bid": last_bid,
+        "users_bid": users_bid,
+        "errorMessage": errorMessage,
+        "isAuthor": isAuthor
     }, status=status)
 
 @login_required
@@ -104,7 +125,7 @@ def watchlist(request: HttpRequest) -> HttpResponse:
 
 def category(request: HttpRequest, category: str) -> HttpResponse:
     category = Category.objects.get(name=category)
-    listings = Listing.objects.filter(category=category).order_by('-created')
+    listings = Listing.objects.filter(category=category, active=True).order_by('-created')
 
     return render(request, "auctions/index.html", {
         "listings": listings,
@@ -122,10 +143,10 @@ def all_categories(request: HttpRequest) -> HttpResponse:
 def comment(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":
         try:
-            content = request.POST['content']
             listing_id = int(request.POST['id'])
+            content = request.POST['content']
         except KeyError or TypeError:
-            return listing(request, listing_id, 400, 'Fill form properly')
+            return listing_view(request, listing_id, 400, 'Fill form properly')
 
         listing = Listing.objects.get(pk=listing_id)
         user = request.user
@@ -154,19 +175,38 @@ def bid(request: HttpRequest) -> HttpResponse:
             last_bid = None
 
         # Check if bid is higher than the last bid
-        if last_bid is not None and bid <= last_bid.bid:
-            return listing(request, listing_id, 400, 'Bid must be higher than the last bid')
+        if last_bid is not None and bid <= last_bid.amount:
+            return listing_view(request, listing_id, 400, 'Bid must be higher than the last bid')
 
         # Check if bid is higher than the starting price
         if bid <= listing.price:
-            return listing(request, listing_id, 400, 'Bid must be higher than the starting price')
+            return listing_view(request, listing_id, 400, 'Bid must be higher than the starting price')
 
         # Create new bid
-        new_bid = Bid(bid=bid, author=user, listing=listing)
+        new_bid = Bid(amount=bid, author=user, listing=listing)
         new_bid.save()
 
         return HttpResponseRedirect(reverse('listing', args=(listing_id,)))
 
+@login_required
+def close_listing(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        listing_id = request.POST['id']
+        listing = Listing.objects.get(pk=listing_id)
+
+        # Check if user is the author of the listing
+        if listing.author != request.user:
+            return listing_view(request, listing_id, 400, 'You are not the author of this listing')
+
+        # Check if listing is already closed
+        if not listing.active:
+            return listing_view(request, listing_id, 400, 'Listing is already closed')
+
+        # Close listing
+        listing.active = False
+        listing.save()
+
+        return HttpResponseRedirect(reverse('listing', args=(listing_id,)))
 
 def login_view(request: HttpRequest) -> HttpResponse:
     if request.method == "POST":

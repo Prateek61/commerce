@@ -21,6 +21,7 @@ class Listing(models.Model):
     category = models.ForeignKey(Category, related_name="listings", on_delete=models.CASCADE, null=True, blank=True)
     author = models.ForeignKey(User, related_name="listings", on_delete=models.CASCADE)
     picture = models.URLField(max_length=200, null=True, blank=True)
+    active = models.BooleanField(default=True)
 
     def get_max_bid(self):
         try:
