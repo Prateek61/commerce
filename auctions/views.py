@@ -25,6 +25,9 @@ def listing(request: HttpRequest, id: int, status: int = 200, errorMessage: str 
     if user.is_authenticated and WatchList.objects.filter(user=user, listing=listing).exists():
         watchlisted = True
 
+    for listing_item in listing:
+        listing_item.bid_price = 12
+
     # Get all comments
     comments = Comment.objects.filter(listing=listing).order_by('-created')
 

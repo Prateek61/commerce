@@ -22,6 +22,13 @@ class Listing(models.Model):
     author = models.ForeignKey(User, related_name="listings", on_delete=models.CASCADE)
     picture = models.URLField(max_length=200, null=True, blank=True)
 
+    def get_max_bid(self):
+        try:
+            # Get latest item
+            return self.bids.latest('created').amount
+        except Bid.DoesNotExist:
+            return self.price
+
 class Bid(models.Model):
     amount = models.FloatField()
     author = models.ForeignKey(User, related_name="bids", on_delete=models.CASCADE)
