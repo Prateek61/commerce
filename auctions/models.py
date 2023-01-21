@@ -26,9 +26,9 @@ class Listing(models.Model):
     def get_max_bid(self):
         try:
             # Get latest item
-            return self.bids.latest('created').amount
+            return self.bids.latest('created')
         except Bid.DoesNotExist:
-            return self.price
+            return None
 
 class Bid(models.Model):
     amount = models.FloatField()

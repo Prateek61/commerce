@@ -21,7 +21,13 @@
                             <a href="{% url 'listing' listing.id %}">
                                 <h5 class="card-title">{{ listing.name }}</h5>
                             </a>
-                            <h6 class="card-subtitle mb-2 text-muted">Price: {{ listing.get_max_bid }}</h6>
+                            <h6 class="card-subtitle mb-2 text-muted">Price: 
+                                {% if listing.get_max_bid %}
+                                    {{ listing.get_max_bid.amount }}
+                                {% else %}
+                                    {{ listing.price }}
+                                {% endif %}
+                            </h6>
                             <p class="card-text">{{ listing.description }}</p>
                             <p class="card-text"><small class="text-muted">Created: {{ listing.created }}</small></p>
                         </div>

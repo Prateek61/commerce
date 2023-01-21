@@ -44,7 +44,7 @@ def listing_view(request: HttpRequest, id: int, status: int = 200, errorMessage:
             users_bid = None
 
     # Check if user is the author of the listing
-    is_author = False
+    isAuthor = False
     if user.is_authenticated and listing.author == user:
         isAuthor = True
 
@@ -55,7 +55,8 @@ def listing_view(request: HttpRequest, id: int, status: int = 200, errorMessage:
         "max_bid": last_bid,
         "users_bid": users_bid,
         "errorMessage": errorMessage,
-        "isAuthor": isAuthor
+        "isAuthor": isAuthor,
+        "max_bid": listing.get_max_bid()
     }, status=status)
 
 @login_required
